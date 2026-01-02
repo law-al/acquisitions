@@ -5,6 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import logger from '#config/logger.js';
 import authRoutes from '#routes/auth.routes.js';
+import securityMiddleware from '#middlewares/security.middleware.js';
 
 const app = express();
 
@@ -37,6 +38,9 @@ app.use(
     },
   })
 );
+
+// 6. Security middleware
+app.use(securityMiddleware);
 
 // Routes
 app.get('/api/health', (req, res) => {
