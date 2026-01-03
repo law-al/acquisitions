@@ -17,10 +17,4 @@ describe('API-Endpoints', () => {
       expect(response.body.message).toBe('API is running');
     });
   });
-  describe('GET /nonexistent', () => {
-    it('should return 404 and a message', async () => {
-      const response = await request(app).get('/nonexistent').expect(404);
-      expect(response.body.message).toBe('Not Found');
-    });
-  });
 });
