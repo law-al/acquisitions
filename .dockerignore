@@ -1,0 +1,22 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.git
+.gitignore
+README.md
+.vscode
+.idea
+*.log
+logs
+coverage
+.nyc_output
+dist
+build
+# Keep drizzle directory for migrations
+# drizzle
+.DS_Store
+Thumbs.db
