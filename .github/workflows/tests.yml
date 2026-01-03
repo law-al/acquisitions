@@ -1,0 +1,77 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        id: tests
+        continue-on-error: true
+        run: npm test
+        env:
+          NODE_ENV: test
+          NODE_OPTIONS: '--experimental-vm-modules'
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/testdb' }}
+          JWT_SECRET: test-secret-key
+          CORS_ORIGIN: '*'
+          LOG_LEVEL: error
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 30
+
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.tests.outcome }}" == "success" ]; then
+            echo "✅ **All tests passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some tests failed**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "### Coverage Summary" >> $GITHUB_STEP_SUMMARY
+            node -e "const fs = require('fs'); const cov = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8')); const total = cov.total; const pct = ((total.lines.pct + total.statements.pct + total.functions.pct + total.branches.pct) / 4).toFixed(2); console.log('- **Overall Coverage**: ' + pct + '%'); console.log('- **Lines**: ' + total.lines.pct + '%'); console.log('- **Statements**: ' + total.statements.pct + '%'); console.log('- **Functions**: ' + total.functions.pct + '%'); console.log('- **Branches**: ' + total.branches.pct + '%');" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Coverage reports are available in the artifacts (retained for 30 days)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Coverage" >> $GITHUB_STEP_SUMMARY
+            echo "Coverage reports were not generated." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Annotate test failures
+        if: steps.tests.outcome == 'failure'
+        run: |
+          echo "::error::Tests failed. Please check the test output above for details."
+          exit 1
