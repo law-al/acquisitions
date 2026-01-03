@@ -5,6 +5,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import logger from '#config/logger.js';
 import authRoutes from '#routes/auth.routes.js';
+import userRoutes from '#routes/user.routes.js';
 import securityMiddleware from '#middlewares/security.middleware.js';
 
 const app = express();
@@ -58,6 +59,7 @@ app.get('/api', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Root route (should be last to avoid conflicts)
 app.get('/', (req, res) => {
